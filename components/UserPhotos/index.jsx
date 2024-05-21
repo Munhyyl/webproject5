@@ -4,9 +4,6 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './styles.css';
 
-/**
- * Define UserPhotos, a React component of CS142 project #5
- */
 class UserPhotos extends React.Component {
   constructor(props) {
     super(props);

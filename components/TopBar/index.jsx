@@ -1,14 +1,16 @@
 import React, { Component } from 'react';
-import { AppBar, Toolbar, Typography, Button } from '@material-ui/core';
+import { AppBar, Toolbar, Typography, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@material-ui/core';
 import { withRouter } from 'react-router-dom';
-import './styles.css';
 import axios from 'axios';
+import './styles.css';
 
 class TopBar extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      version: null
+      version: null,
+      showUploadDialog: false,
+      selectedFile: null,
     };
   }
 
@@ -36,9 +38,47 @@ class TopBar extends Component {
       });
   };
 
+  handleUploadDialogOpen = () => {
+    this.setState({ showUploadDialog: true });
+  };
+
+  handleUploadDialogClose = () => {
+    this.setState({ showUploadDialog: false, selectedFile: null });
+  };
+
+  handleFileChange = (event) => {
+    this.setState({ selectedFile: event.target.files[0] });
+  };
+
+  handleFileUpload = () => {
+    const { selectedFile } = this.state;
+    if (!selectedFile) {
+      alert('Please select a file to upload');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('photo', selectedFile);
+
+    axios.post('/photos/new', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    .then(response => {
+      this.handleUploadDialogClose();
+      alert('Photo uploaded successfully');
+      this.props.history.push('/photos/' + this.props.user._id); // Redirect to the user's photo page
+    })
+    .catch(error => {
+      console.error('Error uploading photo:', error);
+      alert('Failed to upload photo');
+    });
+  };
+
   render() {
     const { user } = this.props;
-    const { version } = this.state;
+    const { version, showUploadDialog } = this.state;
 
     const context = user ? (
       <>
@@ -47,6 +87,9 @@ class TopBar extends Component {
         </Typography>
         <Button color="inherit" onClick={this.handleLogout} style={{ marginLeft: '10px' }}>
           Logout
+        </Button>
+        <Button color="inherit" onClick={this.handleUploadDialogOpen} style={{ marginLeft: '10px' }}>
+          Add Photo
         </Button>
       </>
     ) : (
@@ -68,6 +111,23 @@ class TopBar extends Component {
             </Typography>
           )}
         </Toolbar>
+        <Dialog open={showUploadDialog} onClose={this.handleUploadDialogClose}>
+          <DialogTitle>Upload Photo</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Select a photo to upload.
+            </DialogContentText>
+            <input type="file" onChange={this.handleFileChange} />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={this.handleUploadDialogClose} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={this.handleFileUpload} color="primary">
+              Upload
+            </Button>
+          </DialogActions>
+        </Dialog>
       </AppBar>
     );
   }

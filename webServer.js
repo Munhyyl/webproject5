@@ -29,6 +29,7 @@
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const multer = require("multer");
+const upload = multer({ dest: "images/" });
 
 // ExpressJS App
 const express = require("express");
@@ -85,6 +86,65 @@ app.use((req, res, next) => {
   next();
 });
 
+app.post("/commentsOfPhoto/:photo_id", async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    const { comment } = req.body;
+    if (!comment || !comment.trim()) {
+      return res.status(400).send("Comment cannot be empty");
+    }
+
+    const photoId = req.params.photo_id;
+    const userId = req.session.user._id;
+
+    const photo = await Photo.findById(photoId);
+    if (!photo) {
+      return res.status(404).send("Photo not found");
+    }
+
+    const newComment = {
+      comment: comment.trim(),
+      user_id: userId,
+      date_time: new Date(),
+    };
+
+    photo.comments.push(newComment);
+    await photo.save();
+
+    res.status(200).send(photo);
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).send("Internal server error");
+  }
+});
+
+app.post("/photos/new", upload.single("photo"), async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  if (!req.file) {
+    return res.status(400).send("No file uploaded");
+  }
+
+  const photo = new Photo({
+    file_name: req.file.filename,
+    date_time: new Date(),
+    user_id: req.session.user._id,
+  });
+
+  try {
+    await photo.save();
+    res.status(200).send(photo);
+  } catch (error) {
+    console.error("Error saving photo:", error);
+    res.status(500).send("Internal server error");
+  }
+});
+
 app.get("/", function (request, response) {
   console.log("Simple web server of files from " + __dirname);
   response.send("Simple web server of files from " + __dirname);
@@ -138,41 +198,6 @@ app.get("/test/:p1", function (request, response) {
     );
   } else {
     response.status(400).send("Bad param " + param);
-  }
-});
-
-app.post("/commentsOfPhoto/:photo_id", async (req, res) => {
-  try {
-    if (!req.session.user) {
-      return res.status(401).send("Unauthorized");
-    }
-
-    const { comment } = req.body;
-    if (!comment || !comment.trim()) {
-      return res.status(400).send("Comment cannot be empty");
-    }
-
-    const photoId = req.params.photo_id;
-    const userId = req.session.user._id;
-
-    const photo = await Photo.findById(photoId);
-    if (!photo) {
-      return res.status(404).send("Photo not found");
-    }
-
-    const newComment = {
-      comment: comment.trim(),
-      user_id: userId,
-      date_time: new Date(),
-    };
-
-    photo.comments.push(newComment);
-    await photo.save();
-
-    res.status(200).send(photo);
-  } catch (error) {
-    console.error("Error adding comment:", error);
-    res.status(500).send("Internal server error");
   }
 });
 

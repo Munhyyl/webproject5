@@ -17,6 +17,7 @@ class PhotoShare extends Component {
       currentUser: null, // State to hold the current user
     };
     this.setCurrentUser = this.setCurrentUser.bind(this);
+    
   }
 
   setCurrentUser(user) {
