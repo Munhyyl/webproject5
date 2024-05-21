@@ -1,9 +1,8 @@
 import React from 'react';
-import { List, ListItem, ListItemText } from '@material-ui/core';
+import { List, ListItem, TextField, Button, Typography } from '@material-ui/core';
 import { Link } from 'react-router-dom';
-import './styles.css';
 import axios from 'axios';
-import TopBar from '../TopBar/index.jsx';
+import './styles.css';
 
 /**
  * Define UserPhotos, a React component of CS142 project #5
@@ -13,20 +12,21 @@ class UserPhotos extends React.Component {
     super(props);
     this.state = {
       photos: [],
+      comments: {}, // Object to store comments for each photo
       error: null,
     };
+    this.handleCommentChange = this.handleCommentChange.bind(this);
+    this.handleAddComment = this.handleAddComment.bind(this);
   }
 
   componentDidMount() {
     this.fetchPhotos();
-    this.fetchUserDetails();
   }
 
   componentDidUpdate(prevProps) {
     const userId = this.props.match.params.userId;
     if (userId !== prevProps.match.params.userId) {
       this.fetchPhotos();
-      this.fetchUserDetails();
     }
   }
 
@@ -41,26 +41,39 @@ class UserPhotos extends React.Component {
       });
   }
 
-  fetchUserDetails() {
-    const userId = this.props.match.params.userId;
-    axios.get(`/user/${userId}`)
+  handleCommentChange(event, photoId) {
+    const comments = { ...this.state.comments };
+    comments[photoId] = event.target.value;
+    this.setState({ comments });
+  }
+
+  handleAddComment(photoId) {
+    const commentText = this.state.comments[photoId];
+    if (!commentText || !commentText.trim()) {
+      return;
+    }
+    axios.post(`/commentsOfPhoto/${photoId}`, { comment: commentText })
       .then(response => {
-        this.props.setCurrentUser(response.data); // Update the current user in PhotoShare
+        this.fetchPhotos(); // Refresh photos to include the new comment
+        const comments = { ...this.state.comments };
+        comments[photoId] = ''; // Clear the comment text for the photo
+        this.setState({ comments });
       })
       .catch(error => {
-        console.error('Failed to fetch user details:', error);
+        console.error('Error adding comment:', error);
       });
   }
 
   renderError() {
     const { error } = this.state;
     if (error) {
-      return <ListItemText primary={error} />;
+      return <Typography variant="body1">{error}</Typography>;
     }
     return null;
   }
 
   render() {
+    const { comments } = this.state;
     return (
       <div>
         <List component="div">
@@ -92,6 +105,19 @@ class UserPhotos extends React.Component {
                       </ListItem>
                     ))}
                   </List>
+                  <TextField
+                    label="Add a comment"
+                    value={comments[photo._id] || ''}
+                    onChange={(event) => this.handleCommentChange(event, photo._id)}
+                    fullWidth
+                  />
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => this.handleAddComment(photo._id)}
+                  >
+                    Add Comment
+                  </Button>
                 </div>
               </div>
             </ListItem>

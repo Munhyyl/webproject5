@@ -35,7 +35,6 @@ class UserDetail extends React.Component {
     axios.get(`/user/${userId}`)
       .then(response => {
         this.setState({ user: response.data });
-        this.props.setCurrentUser(response.data);
       })
       .catch(error => {
         this.setState({ error: error.response.data || 'Failed to fetch user details' });

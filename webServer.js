@@ -141,6 +141,41 @@ app.get("/test/:p1", function (request, response) {
   }
 });
 
+app.post("/commentsOfPhoto/:photo_id", async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    const { comment } = req.body;
+    if (!comment || !comment.trim()) {
+      return res.status(400).send("Comment cannot be empty");
+    }
+
+    const photoId = req.params.photo_id;
+    const userId = req.session.user._id;
+
+    const photo = await Photo.findById(photoId);
+    if (!photo) {
+      return res.status(404).send("Photo not found");
+    }
+
+    const newComment = {
+      comment: comment.trim(),
+      user_id: userId,
+      date_time: new Date(),
+    };
+
+    photo.comments.push(newComment);
+    await photo.save();
+
+    res.status(200).send(photo);
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).send("Internal server error");
+  }
+});
+
 app.get("/user/list", function (request, response) {
   User.find({}, function (err, users) {
     if (err) {
