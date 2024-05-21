@@ -14,6 +14,7 @@ class UserPhotos extends React.Component {
     };
     this.handleCommentChange = this.handleCommentChange.bind(this);
     this.handleAddComment = this.handleAddComment.bind(this);
+    this.fetchPhotos = this.fetchPhotos.bind(this);
   }
 
   componentDidMount() {

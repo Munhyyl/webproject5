@@ -68,7 +68,9 @@ class TopBar extends Component {
     .then(response => {
       this.handleUploadDialogClose();
       alert('Photo uploaded successfully');
-      this.props.history.push('/photos/' + this.props.user._id); // Redirect to the user's photo page
+      if (this.props.onPhotoUpload) {
+        this.props.onPhotoUpload();
+      }
     })
     .catch(error => {
       console.error('Error uploading photo:', error);

@@ -17,11 +17,19 @@ class PhotoShare extends Component {
       currentUser: null, // State to hold the current user
     };
     this.setCurrentUser = this.setCurrentUser.bind(this);
-    
+    this.handlePhotoUpload = this.handlePhotoUpload.bind(this); // Bind the method
   }
 
   setCurrentUser(user) {
     this.setState({ currentUser: user });
+  }
+
+  handlePhotoUpload() {
+    
+    if (this.userPhotosRef) {
+      this.userPhotosRef.fetchPhotos();
+    }
+    console.log('Photo uploaded. Refreshing photos...');
   }
 
   render() {
@@ -31,7 +39,7 @@ class PhotoShare extends Component {
         <div>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <TopBar user={currentUser} onLogout={() => this.setCurrentUser(null)} />
+              <TopBar user={currentUser} onLogout={() => this.setCurrentUser(null)} onPhotoUpload={this.handlePhotoUpload} /> 
             </Grid>
             <div className="cs142-main-topbar-buffer" />
             <Grid item sm={3}>
@@ -49,7 +57,7 @@ class PhotoShare extends Component {
                     currentUser ? <UserDetail {...props} /> : <Redirect to="/login" />
                   )} />
                   <Route path="/photos/:userId" render={(props) => (
-                    currentUser ? <UserPhotos {...props} /> : <Redirect to="/login" />
+                  <UserPhotos {...props} ref={ref => this.userPhotosRef = ref} onPhotoUpload={this.handlePhotoUpload} />
                   )} />
                   <Route path="/" render={() => (
                     currentUser ? <Redirect to="/users" /> : <Redirect to="/login" />
