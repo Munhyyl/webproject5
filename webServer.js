@@ -26,6 +26,10 @@
  *                      should have all the Comments on the Photo (JSON format)
  */
 
+const session = require("express-session");
+const bodyParser = require("body-parser");
+const multer = require("multer");
+
 // ExpressJS App
 const express = require("express");
 const app = express();
@@ -41,12 +45,17 @@ const Photo = require("./schema/photo.js");
 const SchemaInfo = require("./schema/schemaInfo.js");
 
 // Connect to the MongoDB instance
-mongoose.connect("mongodb://127.0.0.1/cs142project61", {
+mongoose.connect("mongodb://127.0.0.1/cs142project7", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
 app.use(express.static(__dirname));
+
+app.use(
+  session({ secret: "secretKey", resave: false, saveUninitialized: false })
+);
+app.use(bodyParser.json());
 
 app.get("/", function (request, response) {
   console.log("Simple web server of files from " + __dirname);

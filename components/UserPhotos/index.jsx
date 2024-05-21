@@ -1,8 +1,9 @@
 import React from 'react';
-import { List, ListItem, ListItemText, Link } from '@material-ui/core';
+import { List, ListItem, ListItemText } from '@material-ui/core';
+import { Link } from 'react-router-dom';
 import './styles.css';
 import axios from 'axios';
-import TopBar from '../TopBar/index.jsx'; 
+import TopBar from '../TopBar/index.jsx';
 
 /**
  * Define UserPhotos, a React component of CS142 project #5
@@ -25,6 +26,7 @@ class UserPhotos extends React.Component {
     const userId = this.props.match.params.userId;
     if (userId !== prevProps.match.params.userId) {
       this.fetchPhotos();
+      this.fetchUserDetails();
     }
   }
 
@@ -38,6 +40,7 @@ class UserPhotos extends React.Component {
         this.setState({ error: error.response.data || 'Failed to fetch photos' });
       });
   }
+
   fetchUserDetails() {
     const userId = this.props.match.params.userId;
     axios.get(`/user/${userId}`)
@@ -60,7 +63,6 @@ class UserPhotos extends React.Component {
   render() {
     return (
       <div>
-        
         <List component="div">
           {this.renderError()}
           {this.state.photos.map(photo => (
