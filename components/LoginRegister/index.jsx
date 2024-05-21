@@ -1,45 +1,43 @@
-// components/LoginRegister.js
-import React, { Component } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 
-class LoginRegister extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      loginName: '',
-      errorMessage: '',
+function LoginRegister({ onLogin }) {
+    const [loginName, setLoginName] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleLogin = () => {
+        fetch('/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login_name: loginName, password })
+        }).then(async response => {
+            if (response.ok) {
+                const user = await response.json();
+                onLogin(user);
+            } else {
+                setError('Invalid login name or password');
+            }
+        });
     };
-  }
 
-  handleLogin = () => {
-    axios.post('/admin/login', { login_name: this.state.loginName })
-      .then(response => {
-        this.props.setCurrentUser(response.data);
-      })
-      .catch(error => {
-        this.setState({ errorMessage: 'Invalid login name. Please try again.' });
-      });
-  };
-
-  handleInputChange = (event) => {
-    this.setState({ loginName: event.target.value });
-  };
-
-  render() {
     return (
-      <div>
-        <h2>Login</h2>
-        <input
-          type="text"
-          value={this.state.loginName}
-          onChange={this.handleInputChange}
-          placeholder="Login Name"
-        />
-        <button onClick={this.handleLogin}>Login</button>
-        {this.state.errorMessage && <div>{this.state.errorMessage}</div>}
-      </div>
+        <div className="login-register">
+            <input
+                type="text"
+                placeholder="Login Name"
+                value={loginName}
+                onChange={(e) => setLoginName(e.target.value)}
+            />
+            <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+            />
+            <button onClick={handleLogin}>Login</button>
+            {error && <p className="error">{error}</p>}
+        </div>
     );
-  }
 }
 
 export default LoginRegister;

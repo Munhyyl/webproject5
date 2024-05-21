@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { AppBar, Toolbar, Typography } from '@material-ui/core';
+import { AppBar, Toolbar, Typography, Button } from '@material-ui/core';
+import { withRouter } from 'react-router-dom';
 import './styles.css';
 import axios from 'axios';
 
@@ -22,17 +23,35 @@ class TopBar extends Component {
       });
   }
 
+  handleLogout = () => {
+    axios.post('/admin/logout')
+      .then(response => {
+        if (response.status === 200) {
+          this.props.onLogout();
+          this.props.history.push('/login');
+        }
+      })
+      .catch(error => {
+        console.error('Error logging out:', error);
+      });
+  };
+
   render() {
     const { user } = this.props;
     const { version } = this.state;
 
     const context = user ? (
-      <Typography variant="h6" color="inherit" style={{ marginLeft: 'auto' }}>
-        Photos of {user.first_name} {user.last_name}
-      </Typography>
+      <>
+        <Typography variant="h6" color="inherit" style={{ marginLeft: 'auto' }}>
+          Hi {user.first_name}
+        </Typography>
+        <Button color="inherit" onClick={this.handleLogout} style={{ marginLeft: '10px' }}>
+          Logout
+        </Button>
+      </>
     ) : (
       <Typography variant="h6" color="inherit" style={{ marginLeft: 'auto' }}>
-        Photo Application
+        Please Login
       </Typography>
     );
 
@@ -54,4 +73,4 @@ class TopBar extends Component {
   }
 }
 
-export default TopBar;
+export default withRouter(TopBar);

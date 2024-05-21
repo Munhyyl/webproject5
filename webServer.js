@@ -57,6 +57,34 @@ app.use(
 );
 app.use(bodyParser.json());
 
+app.post("/admin/login", async (req, res) => {
+  const { login_name, password } = req.body;
+  const user = await User.findOne({ login_name });
+  if (!user || user.password !== password) {
+    return res.status(400).send("Invalid login name or password");
+  }
+  req.session.user = user;
+  res.send({ _id: user._id, first_name: user.first_name });
+});
+
+app.post("/admin/logout", (req, res) => {
+  if (!req.session.user) {
+    return res.status(400).send("No user currently logged in");
+  }
+  req.session.destroy();
+  res.sendStatus(200);
+});
+
+app.use((req, res, next) => {
+  if (
+    !req.session.user &&
+    !["/admin/login", "/admin/logout"].includes(req.path)
+  ) {
+    return res.status(401).send("Unauthorized");
+  }
+  next();
+});
+
 app.get("/", function (request, response) {
   console.log("Simple web server of files from " + __dirname);
   response.send("Simple web server of files from " + __dirname);
