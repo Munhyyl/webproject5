@@ -1,0 +1,10 @@
+.cs142-main-grid-item {
+  padding: 20px;
+  background-color: #fff;
+  margin: 10px;
+}
+
+.user-list-item {
+  text-decoration: none;
+  color: #203040;
+}

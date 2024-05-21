@@ -1,0 +1,28 @@
+.user-photo-image {
+    width: 50%;
+    height: inherit;
+    margin-bottom: 20px;
+  }
+  
+  .user-photo-image img {
+    width: 50%;
+    height: auto;
+  }
+  
+  .photo-upload-text {
+    font-size: 0.8em;
+    color: #888;
+  }
+  
+  .comment-user {
+    font-weight: bold;
+  }
+  
+  .comment-text {
+    margin-left: 5px;
+  }
+  
+  .comment-upload-time {
+    font-size: 0.8em;
+    color: #888;
+  }
