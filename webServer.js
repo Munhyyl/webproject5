@@ -145,6 +145,51 @@ app.post("/photos/new", upload.single("photo"), async (req, res) => {
   }
 });
 
+app.post("/user", (request, response) => {
+  console.log("Server's request body");
+  console.log(request.body);
+  const newUser = request.body;
+
+  // Check: the first_name, last_name, and password must be non-empty strings
+  if (!(newUser.first_name && newUser.last_name && newUser.password)) {
+    response
+      .status(400)
+      .json({
+        message:
+          "The first_name, last_name, and password must be non-empty strings",
+      });
+    return;
+  }
+
+  // only create a new user if it have not existed
+  User.findOne({ login_name: newUser.login_name })
+    .then((user) => {
+      if (!user) {
+        // user not exists yet
+        console.log("User not found");
+        // create the user in the DB
+        User.create(newUser)
+          .then(() => console.log("New User created in the DB"))
+          .catch((e) => console.log("Error creating new user ", e));
+        response.status(200).json({ message: "User created successfully!" });
+      } else {
+        // user exists already
+        console.log("User already exists!");
+        console.log(user);
+        response
+          .status(400)
+          .json({
+            message:
+              "The login name already exists, please choose a different login name",
+          });
+      }
+    })
+    .catch((error) => {
+      console.log("Error: user found user error", error);
+      response.status(400).json({ message: "Other error occured: " });
+    });
+});
+
 app.get("/", function (request, response) {
   console.log("Simple web server of files from " + __dirname);
   response.send("Simple web server of files from " + __dirname);
