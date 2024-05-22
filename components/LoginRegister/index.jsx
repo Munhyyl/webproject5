@@ -35,6 +35,7 @@ class LoginRegister extends Component {
     });
   };
 
+  
   handleInputChange = (event) => {
     const { name, value } = event.target;
     this.setState({ [name]: value });
@@ -65,6 +66,7 @@ class LoginRegister extends Component {
       })
       .catch(error => {
         this.setState({ message: error.response.data.message });
+        
       });
   };
 
@@ -80,7 +82,6 @@ class LoginRegister extends Component {
       location: '',
       description: '',
       occupation: '',
-      message: '',
     });
   };
 

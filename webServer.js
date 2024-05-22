@@ -76,15 +76,15 @@ app.post("/admin/logout", (req, res) => {
   res.sendStatus(200);
 });
 
-app.use((req, res, next) => {
-  if (
-    !req.session.user &&
-    !["/admin/login", "/admin/logout"].includes(req.path)
-  ) {
-    return res.status(401).send("Unauthorized");
+function hasSessionRecord(request, response, next) {
+  if (request.session.userIdRecord) {
+    console.log("Session: detect current user");
+    next(); // continue to next step
+  } else {
+    console.log("Session: NO active user!");
+    response.status(401).json({ message: "Unauthorized" });
   }
-  next();
-});
+}
 
 app.post("/commentsOfPhoto/:photo_id", async (req, res) => {
   try {

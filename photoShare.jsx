@@ -10,20 +10,43 @@ import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
 import LoginRegister from "./components/LoginRegister";
 
+
+const storeUserSession = (user) => {
+  localStorage.setItem('user', JSON.stringify(user));
+};
+
+
+const getUserSession = () => {
+  const userSession = localStorage.getItem('user');
+  return userSession ? JSON.parse(userSession) : null;
+};
+
+
+const clearUserSession = () => {
+  localStorage.removeItem('user');
+};
 class PhotoShare extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentUser: null, // State to hold the current user
+      currentUser: getUserSession(),
     };
     this.setCurrentUser = this.setCurrentUser.bind(this);
     this.handlePhotoUpload = this.handlePhotoUpload.bind(this); // Bind the method
+    this.handleLogout = this.handleLogout.bind(this); 
   }
-
+  componentDidMount() {
+    // Check if there's a user session on component mount
+    const userSession = getUserSession();
+    if (userSession) {
+      this.setState({ currentUser: userSession });
+    }
+  }
   setCurrentUser(user) {
     this.setState({ currentUser: user });
+    storeUserSession(user);
+   
   }
-
   handlePhotoUpload() {
     
     if (this.userPhotosRef) {
@@ -31,7 +54,11 @@ class PhotoShare extends Component {
     }
     console.log('Photo uploaded. Refreshing photos...');
   }
-
+  handleLogout = () => {
+    // Clear the authentication state
+    this.setCurrentUser(null);
+    clearUserSession();
+  };
   render() {
     const { currentUser } = this.state;
     return (
