@@ -87,11 +87,11 @@ class TopBar extends Component {
         <Typography variant="h6" color="inherit" style={{ marginLeft: 'auto' }}>
           Hi {user.first_name}
         </Typography>
-        <Button color="inherit" onClick={this.handleLogout} style={{ marginLeft: '10px' }}>
-          Logout
-        </Button>
         <Button color="inherit" onClick={this.handleUploadDialogOpen} style={{ marginLeft: '10px' }}>
           Add Photo
+        </Button>
+        <Button color="inherit" onClick={this.handleLogout} style={{ marginLeft: '10px' }}>
+          Logout
         </Button>
       </>
     ) : (

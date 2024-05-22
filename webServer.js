@@ -152,12 +152,10 @@ app.post("/user", (request, response) => {
 
   // Check: the first_name, last_name, and password must be non-empty strings
   if (!(newUser.first_name && newUser.last_name && newUser.password)) {
-    response
-      .status(400)
-      .json({
-        message:
-          "The first_name, last_name, and password must be non-empty strings",
-      });
+    response.status(400).json({
+      message:
+        "The first_name, last_name, and password must be non-empty strings",
+    });
     return;
   }
 
@@ -176,12 +174,10 @@ app.post("/user", (request, response) => {
         // user exists already
         console.log("User already exists!");
         console.log(user);
-        response
-          .status(400)
-          .json({
-            message:
-              "The login name already exists, please choose a different login name",
-          });
+        response.status(400).json({
+          message:
+            "The login name already exists, please choose a different login name",
+        });
       }
     })
     .catch((error) => {
