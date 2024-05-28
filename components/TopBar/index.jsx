@@ -78,6 +78,20 @@ class TopBar extends Component {
     });
   };
 
+  handleDeleteUser = () => {
+    axios.post(`/deleteUser/${this.props.user._id}`)
+      .then(response => {
+        
+        this.props.onLogout(); // Энэ хэсэгт хэрэглэгчийн мэдээллийг устгахын дараа хэрэглэгчийн системээс гарах үйлдлийг зохионо
+        this.props.history.push('/login'); // Логин хуудас руу шилжих
+      })
+      .catch(error => {
+        console.error('Error deleting user:', error);
+        this.props.onLogout(); 
+        
+      });
+  };
+
   render() {
     const { user } = this.props;
     const { version, showUploadDialog } = this.state;
@@ -92,6 +106,9 @@ class TopBar extends Component {
         </Button>
         <Button color="inherit" onClick={this.handleLogout} style={{ marginLeft: '10px' }}>
           Logout
+        </Button>
+        <Button color="inherit" onClick={this.handleDeleteUser} style={{ marginLeft: '10px' }}>
+          Delete Account
         </Button>
       </>
     ) : (

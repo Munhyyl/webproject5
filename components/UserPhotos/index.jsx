@@ -14,6 +14,8 @@ class UserPhotos extends React.Component {
     };
     this.handleCommentChange = this.handleCommentChange.bind(this);
     this.handleAddComment = this.handleAddComment.bind(this);
+    this.handleDeletePhoto = this.handleDeletePhoto.bind(this);
+    this.handleDeleteComment = this.handleDeleteComment.bind(this);
     this.fetchPhotos = this.fetchPhotos.bind(this);
   }
 
@@ -62,6 +64,36 @@ class UserPhotos extends React.Component {
       });
   }
 
+  handleDeletePhoto(photoId) {
+    // Check if the photo belongs to the current user
+    if (this.props.currentUser && this.props.currentUser._id === this.props.match.params.userId) {
+      axios.post(`/deletePhoto/${photoId}`)
+        .then(response => {
+          // Handle successful deletion
+          console.log(response.data.message);
+          this.fetchPhotos(); // Refresh photos after deletion
+        })
+        .catch(error => {
+          console.error('Error deleting photo:', error);
+        });
+    } else {
+      // Handle error or display a message indicating that the user can't delete this photo
+      console.error('You are not authorized to delete this photo.');
+    }
+  }
+  
+  handleDeleteComment(commentId, photoId) {
+    axios.post(`/deleteComment/${commentId}`, { photo_id: photoId })
+      .then(response => {
+        // Handle successful deletion
+        console.log(response.data.message);
+        this.fetchPhotos(); // Refresh photos after deletion
+      })
+      .catch(error => {
+        console.error('Error deleting comment:', error);
+      });
+  }
+
   renderError() {
     const { error } = this.state;
     if (error) {
@@ -99,10 +131,27 @@ class UserPhotos extends React.Component {
                           <span className="opacity-50 ms-3 comment-upload-time">
                             (At: {comment.date_time})
                           </span>
+                          {/* Add delete button for comments */}
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            size="small"
+                            onClick={() => this.handleDeleteComment(comment._id, photo._id)}
+                          >
+                            Delete Comment
+                          </Button>
                         </p>
                       </ListItem>
                     ))}
                   </List>
+                  {/* Add delete button for photos */}
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => this.handleDeletePhoto(photo._id)}
+                  >
+                    Delete Photo
+                  </Button>
                   <TextField
                     label="Add a comment"
                     value={comments[photo._id] || ''}
@@ -112,18 +161,20 @@ class UserPhotos extends React.Component {
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => this.handleAddComment(photo._id)}
-                  >
-                    Add Comment
-                  </Button>
-                </div>
-              </div>
-            </ListItem>
-          ))}
-        </List>
-      </div>
-    );
-  }
-}
-
-export default UserPhotos;
+                    onClick={() => this.handleAddComment(photo
+                      ._id)}
+                      >
+                        Add Comment
+                      </Button>
+                    </div>
+                  </div>
+                </ListItem>
+              ))}
+            </List>
+          </div>
+        );
+      }
+    }
+    
+    export default UserPhotos;
+    
