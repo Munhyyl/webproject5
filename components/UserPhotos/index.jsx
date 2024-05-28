@@ -1,7 +1,9 @@
 import React from 'react';
-import { List, ListItem, TextField, Button, Typography } from '@material-ui/core';
+import { List, ListItem, TextField, Button, Typography, IconButton } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import DeleteIcon from '@material-ui/icons/Delete';
+import FavoriteIcon from '@material-ui/icons/Favorite'; // Import like icon
 import './styles.css';
 
 class UserPhotos extends React.Component {
@@ -14,8 +16,9 @@ class UserPhotos extends React.Component {
     };
     this.handleCommentChange = this.handleCommentChange.bind(this);
     this.handleAddComment = this.handleAddComment.bind(this);
-    this.handleDeletePhoto = this.handleDeletePhoto.bind(this);
+    this.handleLikeClick = this.handleLikeClick.bind(this);
     this.handleDeleteComment = this.handleDeleteComment.bind(this);
+    this.handleDeletePhoto = this.handleDeletePhoto.bind(this);
     this.fetchPhotos = this.fetchPhotos.bind(this);
   }
 
@@ -64,33 +67,36 @@ class UserPhotos extends React.Component {
       });
   }
 
-  handleDeletePhoto(photoId) {
-    // Check if the photo belongs to the current user
-    if (this.props.currentUser && this.props.currentUser._id === this.props.match.params.userId) {
-      axios.post(`/deletePhoto/${photoId}`)
-        .then(response => {
-          // Handle successful deletion
-          console.log(response.data.message);
-          this.fetchPhotos(); // Refresh photos after deletion
-        })
-        .catch(error => {
-          console.error('Error deleting photo:', error);
-        });
-    } else {
-      // Handle error or display a message indicating that the user can't delete this photo
-      console.error('You are not authorized to delete this photo.');
-    }
+  handleLikeClick(photoId) {
+    const userId = this.props.user._id; // Replace with the actual current user ID
+    console.log(`Liking photo: ${photoId} by user: ${userId}`);
+    axios.post(`/like/${photoId}`, { user_id: userId })
+      .then(response => {
+        console.log('Like response:', response);
+        this.fetchPhotos(); // Refresh photos to include the updated likes
+      })
+      .catch(error => {
+        console.error('Error liking photo:', error);
+      });
   }
-  
+
   handleDeleteComment(commentId, photoId) {
     axios.post(`/deleteComment/${commentId}`, { photo_id: photoId })
       .then(response => {
-        // Handle successful deletion
-        console.log(response.data.message);
-        this.fetchPhotos(); // Refresh photos after deletion
+        this.fetchPhotos(); // Refresh photos to remove the deleted comment
       })
       .catch(error => {
         console.error('Error deleting comment:', error);
+      });
+  }
+
+  handleDeletePhoto(photoId) {
+    axios.post(`/deletePhoto/${photoId}`)
+      .then(response => {
+        this.fetchPhotos(); // Refresh photos to remove the deleted photo
+      })
+      .catch(error => {
+        console.error('Error deleting photo:', error);
       });
   }
 
@@ -103,12 +109,12 @@ class UserPhotos extends React.Component {
   }
 
   render() {
-    const { comments } = this.state;
+    const { comments, photos } = this.state;
     return (
       <div>
         <List component="div">
           {this.renderError()}
-          {this.state.photos.map(photo => (
+          {photos.map(photo => (
             <ListItem divider={false} key={photo._id}>
               <div className="card user-photo-image">
                 <img src={"images/" + photo.file_name} className="card-img-top" alt="User" />
@@ -116,6 +122,21 @@ class UserPhotos extends React.Component {
                   <p className="card-title opacity-50 photo-upload-text">
                     {photo.date_time}
                   </p>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => this.handleLikeClick(photo._id)}
+                    className="clickable"
+                  >
+                    <FavoriteIcon />
+                    {photo.likes.includes('currentUser') ? 'Unlike' : 'Like'} ({photo.likes.length})
+                  </Button>
+                  <IconButton
+                    aria-label="delete"
+                    onClick={() => this.handleDeletePhoto(photo._id)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                   <List component="div">
                     {photo.comments && photo.comments.map(comment => (
                       <ListItem divider={false} key={comment._id}>
@@ -131,27 +152,16 @@ class UserPhotos extends React.Component {
                           <span className="opacity-50 ms-3 comment-upload-time">
                             (At: {comment.date_time})
                           </span>
-                          {/* Add delete button for comments */}
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            size="small"
+                          <IconButton
+                            aria-label="delete"
                             onClick={() => this.handleDeleteComment(comment._id, photo._id)}
                           >
-                            Delete Comment
-                          </Button>
+                            <DeleteIcon />
+                          </IconButton>
                         </p>
                       </ListItem>
                     ))}
                   </List>
-                  {/* Add delete button for photos */}
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => this.handleDeletePhoto(photo._id)}
-                  >
-                    Delete Photo
-                  </Button>
                   <TextField
                     label="Add a comment"
                     value={comments[photo._id] || ''}
@@ -161,20 +171,18 @@ class UserPhotos extends React.Component {
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => this.handleAddComment(photo
-                      ._id)}
-                      >
-                        Add Comment
-                      </Button>
-                    </div>
-                  </div>
-                </ListItem>
-              ))}
-            </List>
-          </div>
-        );
-      }
-    }
-    
-    export default UserPhotos;
-    
+                    onClick={() => this.handleAddComment(photo._id)}
+                  >
+                    Add Comment
+                  </Button>
+                </div>
+              </div>
+            </ListItem>
+          ))}
+        </List>
+      </div>
+    );
+  }
+}
+
+export default UserPhotos;

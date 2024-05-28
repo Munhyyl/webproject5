@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { AppBar, Toolbar, Typography, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@material-ui/core';
 import { withRouter } from 'react-router-dom';
 import axios from 'axios';
+import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import AddPhotoAlternateIcon from '@material-ui/icons/AddPhotoAlternate';
 import './styles.css';
 
 class TopBar extends Component {
@@ -102,13 +104,13 @@ class TopBar extends Component {
           Hi {user.first_name}
         </Typography>
         <Button color="inherit" onClick={this.handleUploadDialogOpen} style={{ marginLeft: '10px' }}>
-          Add Photo
+          <AddPhotoAlternateIcon />
         </Button>
         <Button color="inherit" onClick={this.handleLogout} style={{ marginLeft: '10px' }}>
           Logout
         </Button>
         <Button color="inherit" onClick={this.handleDeleteUser} style={{ marginLeft: '10px' }}>
-          Delete Account
+          <DeleteOutlineIcon />
         </Button>
       </>
     ) : (

@@ -634,64 +634,36 @@ app.get("/photosOfUser/:id", hasSessionRecord, function (request, response) {
   });
 });
 app.post("/like/:photo_id", (request, response) => {
-  // check empty response
-  if (Object.keys(request.body).length === 0) {
-    response
-      .status(400)
-      .json({ message: "Server: empty comment is not allowed" });
-    return;
+  const photoID = request.params.photo_id;
+  const userID = request.body.user_id; // Get the user ID from the request body
+
+  if (!userID) {
+    return response.status(400).json({ message: "User ID is required" });
   }
 
-  const photoID = request.params.photo_id; // like which photo
-  const userID = request.body.action; // like action by which user
-
-  Photo.findOne({ _id: photoID })
-    .then(async (photo) => {
-      // handle not found
+  Photo.findById(photoID)
+    .then((photo) => {
       if (!photo) {
-        response
-          .status(400)
-          .json({ message: "Server: Photo you just commented is not found" });
+        return response.status(404).json({ message: "Photo not found" });
       }
 
-      // Using async mutex to protect race conditions and update the like votes
-      try {
-        const release = await mutex.acquire();
-
-        // Critical section: Only one request can enter this section at a time
-        // Update the likes votes, handle found photo
-        if (photo.likes.includes(userID)) {
-          // when hitting a liked photo
-          // Remove an item from the original list (no copy)
-          // * Since you are modifying the array in place, Mongoose is more likely to detect
-          // * this as a change to the photo object, and the change will persist when you call photo.save().
-          let indexToRemove = photo.likes.indexOf(userID);
-          if (indexToRemove !== -1) {
-            photo.likes.splice(indexToRemove, 1);
-          }
-
-          // photo.likes = photo.likes.filter(id => id !== userID); // remove the user id
-          // ! Why this filter() doesn't work ? (OK)
-          // * MongoDB's update operation didn't handle the array replacement correctly
-          // * MongoDB recommands modifying the original array to work correctly.
-          // * When you directly assign a new array to photo.likes, Mongoose might not detect
-          // * this as a change to the photo object,
-          // * and therefore the change might not persist when you call photo.save().
-        } else {
-          // when hitting a non-liked photo
-          photo.likes.push(userID);
-        }
-        console.log(`** Server: ${userID} clicked like button! **`);
-        photo.save(); // Update the likes
-        release(); // Release the lock after the critical section
-        response.status(200).json({ message: "Like updated successfully!" }); // send back succeed response
-      } catch (error) {
-        response.status(500).json({ message: "Internal server error" });
+      const userIndex = photo.likes.indexOf(userID);
+      if (userIndex === -1) {
+        // User has not liked the photo yet
+        photo.likes.push(userID);
+      } else {
+        // User has already liked the photo
+        photo.likes.splice(userIndex, 1);
       }
+
+      return photo.save();
+    })
+    .then(() => {
+      response.status(200).json({ message: "Like updated successfully" });
     })
     .catch((error) => {
-      response.status(400).json({ message: "Other error occured: " });
-      console.error("Server: Error Updating like info", error);
+      console.error("Error updating likes:", error);
+      response.status(500).json({ message: "Internal server error" });
     });
 });
 

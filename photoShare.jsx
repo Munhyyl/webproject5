@@ -164,7 +164,7 @@ class PhotoShare extends Component {
                     currentUser ? <UserDetail {...props} /> : <Redirect to="/login" />
                   )} />
                   <Route path="/photos/:userId" render={(props) => (
-                    currentUser ? <UserPhotos {...props} ref={ref => this.userPhotosRef = ref} onPhotoUpload={this.handlePhotoUpload} onLogin={this.setCurrentUser}/> : <Redirect to="/login" />
+                    currentUser ? <UserPhotos user={currentUser} {...props} ref={ref => this.userPhotosRef = ref} onPhotoUpload={this.handlePhotoUpload} /> : <Redirect to="/login" />
                   )} />
                   <Route path="/" render={() => (
                     currentUser ? <Redirect to="/users" /> : <Redirect to="/login" />
