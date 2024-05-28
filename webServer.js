@@ -46,7 +46,7 @@ const Photo = require("./schema/photo.js");
 const SchemaInfo = require("./schema/schemaInfo.js");
 
 // Connect to the MongoDB instance
-mongoose.connect("mongodb://127.0.0.1/cs142project7", {
+mongoose.connect("mongodb://127.0.0.1/cs142project8", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -342,7 +342,87 @@ app.get("/photosOfUser/:id", function (request, response) {
     }
   });
 });
+//*********************project8***************************************** */
+app.post("/photosOfUser/mentions", function (request, response) {
+  var mentionedUsersIdArr = request.body.user_id_arr;
+  var photoId = request.body.photoId;
+  Photo.findOne({ _id: photoId }, function (err, photoInfo) {
+    if (err) {
+      console.error("Doing /photosOfUser/mentions error: ", err);
+      response.status(400).send(JSON.stringify(err));
+      return;
+    }
+    if (photoInfo === null || photoInfo === undefined) {
+      console.log("Photos not found.");
+      response.status(400).send("Not found");
+      return;
+    }
 
+    for (var i = 0; i < mentionedUsersIdArr.length; i++) {
+      if (!photoInfo.mentions.includes(mentionedUsersIdArr[i])) {
+        photoInfo.mentions.push(mentionedUsersIdArr[i]);
+      }
+    }
+    Photo.findOneAndUpdate(
+      { _id: photoId },
+      { mentions: photoInfo.mentions },
+      { new: true },
+      function (error) {
+        if (error) {
+          console.error("Adding mentions error: ", error);
+          response.status(400).send(JSON.stringify(error));
+          return;
+        }
+        response.status(200).send("Mention successfully registered.");
+      }
+    );
+  });
+});
+app.get("/userMentions/:id", function (request, response) {
+  var user_id = request.params.id;
+  Photo.find({}, function (err, photoInfo) {
+    if (err) {
+      console.error("Doing /userMentions/:id error: ", err);
+      response.status(400).send(JSON.stringify(err));
+      return;
+    }
+    if (photoInfo === null || photoInfo === undefined) {
+      console.log("Photos not found.");
+      response.status(400).send("Not found");
+      return;
+    }
+    let mentionedPhotos = [];
+    for (var i = 0; i < photoInfo.length; i++) {
+      if (photoInfo[i].mentions.includes(user_id)) {
+        mentionedPhotos.push({
+          file_name: photoInfo[i].file_name,
+          owner_id: photoInfo[i].user_id,
+        });
+      }
+    }
+    async.each(mentionedPhotos, addOwnersName, allDone);
+
+    function addOwnersName(mentionedPhotosFile, callback) {
+      var ownerId = mentionedPhotosFile.owner_id;
+      User.findOne({ _id: ownerId }, function (error, ownerInfo) {
+        if (!error) {
+          var ownerFirstName = ownerInfo.first_name;
+          var ownerLastName = ownerInfo.last_name;
+          mentionedPhotosFile.owner_name = ownerFirstName + " " + ownerLastName;
+        }
+        callback(error);
+      });
+    }
+
+    function allDone(error) {
+      if (error) {
+        response.status(500).send(error);
+      } else {
+        response.status(200).send(mentionedPhotos);
+      }
+    }
+  });
+});
 var server = app.listen(3000, function () {
   const port = server.address().port;
   console.log(
