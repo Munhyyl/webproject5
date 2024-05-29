@@ -134,6 +134,7 @@ class UserPhotos extends React.Component {
                   <IconButton
                     aria-label="delete"
                     onClick={() => this.handleDeletePhoto(photo._id)}
+                    style={{ visibility: photo.user_id === this.props.user._id ? 'visible' : 'hidden' }}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -155,6 +156,7 @@ class UserPhotos extends React.Component {
                           <IconButton
                             aria-label="delete"
                             onClick={() => this.handleDeleteComment(comment._id, photo._id)}
+                            style={{ visibility: photo.user_id === this.props.user._id || comment.user._id === this.props.user._id ? 'visible' : 'hidden' }}
                           >
                             <DeleteIcon />
                           </IconButton>
