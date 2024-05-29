@@ -343,296 +343,48 @@ app.get("/photosOfUser/:id", function (request, response) {
   });
 });
 //*********************project8***************************************** */
-// app.post("/photosOfUser/mentions", function (request, response) {
-//   var mentionedUsersIdArr = request.body.user_id_arr;
-//   var photoId = request.body.photoId;
-//   Photo.findOne({ _id: photoId }, function (err, photoInfo) {
-//     if (err) {
-//       console.error("Doing /photosOfUser/mentions error: ", err);
-//       response.status(400).send(JSON.stringify(err));
-//       return;
-//     }
-//     if (photoInfo === null || photoInfo === undefined) {
-//       console.log("Photos not found.");
-//       response.status(400).send("Not found");
-//       return;
-//     }
+// app.post("/addMention/:photoId/:commentId", (req, res) => {
+//   const { photoId, commentId } = req.params;
+//   const { mentionedUserId } = req.body;
 
-//     for (var i = 0; i < mentionedUsersIdArr.length; i++) {
-//       if (!photoInfo.mentions.includes(mentionedUsersIdArr[i])) {
-//         photoInfo.mentions.push(mentionedUsersIdArr[i]);
+//   // Validate mentioned user ID
+//   // You might want to check if the user exists in your database
+
+//   // Update the comment with the mentioned user ID
+//   Photo.findOneAndUpdate(
+//     { _id: photoId, "comments._id": commentId },
+//     {
+//       $addToSet: {
+//         "comments.$.mentions": { mentioned_user_id: mentionedUserId },
+//       },
+//     },
+//     { new: true }
+//   )
+//     .then((photo) => {
+//       if (!photo) {
+//         return res.status(404).json({ error: "Photo or comment not found" });
 //       }
-//     }
-//     Photo.findOneAndUpdate(
-//       { _id: photoId },
-//       { mentions: photoInfo.mentions },
-//       { new: true },
-//       function (error) {
-//         if (error) {
-//           console.error("Adding mentions error: ", error);
-//           response.status(400).send(JSON.stringify(error));
-//           return;
-//         }
-//         response.status(200).send("Mention successfully registered.");
-//       }
-//     );
-//   });
+//       res.json(photo);
+//     })
+//     .catch((error) => {
+//       console.error("Error adding mention:", error);
+//       res.status(500).json({ error: "Internal server error" });
+//     });
 // });
-// app.get("/userMentions/:id", function (request, response) {
-//   var user_id = request.params.id;
-//   Photo.find({}, function (err, photoInfo) {
-//     if (err) {
-//       console.error("Doing /userMentions/:id error: ", err);
-//       response.status(400).send(JSON.stringify(err));
-//       return;
-//     }
-//     if (photoInfo === null || photoInfo === undefined) {
-//       console.log("Photos not found.");
-//       response.status(400).send("Not found");
-//       return;
-//     }
-//     let mentionedPhotos = [];
-//     for (var i = 0; i < photoInfo.length; i++) {
-//       if (photoInfo[i].mentions.includes(user_id)) {
-//         mentionedPhotos.push({
-//           file_name: photoInfo[i].file_name,
-//           owner_id: photoInfo[i].user_id,
-//         });
-//       }
-//     }
-//     async.each(mentionedPhotos, addOwnersName, allDone);
+// app.get("/photosWithMentions/:userId", (req, res) => {
+//   const { userId } = req.params;
 
-//     function addOwnersName(mentionedPhotosFile, callback) {
-//       var ownerId = mentionedPhotosFile.owner_id;
-//       User.findOne({ _id: ownerId }, function (error, ownerInfo) {
-//         if (!error) {
-//           var ownerFirstName = ownerInfo.first_name;
-//           var ownerLastName = ownerInfo.last_name;
-//           mentionedPhotosFile.owner_name = ownerFirstName + " " + ownerLastName;
-//         }
-//         callback(error);
-//       });
-//     }
-
-//     function allDone(error) {
-//       if (error) {
-//         response.status(500).send(error);
-//       } else {
-//         response.status(200).send(mentionedPhotos);
-//       }
-//     }
-//   });
+//   // Query photos with mentions of the specified user
+//   Photo.find({ "comments.mentions.mentioned_user_id": userId })
+//     .then((photos) => {
+//       res.json(photos);
+//     })
+//     .catch((error) => {
+//       console.error("Error retrieving photos with mentions:", error);
+//       res.status(500).json({ error: "Internal server error" });
+//     });
 // });
-app.get("/user2/:id", hasSessionRecord, async function (request, response) {
-  const userID = request.params.id;
 
-  try {
-    /**
-     * * Noted: By using await, subsequent lines of code
-     * * after the await expression will not execute
-     * * until the awaited promise resolves or rejects.
-     */
-    const user = await User.findOne({ _id: userID });
-
-    // handle not user found
-    if (!user) {
-      console.log(`** User of ${userID}: Not Found! **`);
-      return response.status(404).json({ message: `User not found` });
-    }
-
-    // handle found user
-    const userObj = JSON.parse(JSON.stringify(user)); // Convert Mongoose object to a plain JavaScript object
-    delete userObj.__v; // remove unnecessary property
-    userObj.logged_user_first_name = request.session.sessionUserFirstName; // save logged user first name for TopBar
-    userObj.logged_user_last_name = request.session.sessionUserLastName;
-    userObj.logged_user_id = request.session.sessionUserID;
-    console.log(
-      `** Server: login user: ${userObj.logged_user_first_name} found! **`
-    );
-
-    // Get most recent photo and most commented photo
-    const photosData = await Photo.find({ user_id: userID });
-
-    // handle not photo found (user has not posted any photos yet)
-    if (photosData.length === 0) {
-      console.log(`** User has not posted any photos yet **`);
-      return response.status(200).json(userObj);
-    }
-
-    // handle found photo
-    const photos = JSON.parse(JSON.stringify(photosData)); // get data from server and convert to JS data
-
-    // get the most recent uploaded photo
-    photos.sort(
-      (a, b) =>
-        new Date(b.date_time).getTime() - new Date(a.date_time).getTime()
-    ); // sort photos in a descending order by date
-    if (photos.length > 0) {
-      userObj.mostRecentPhotoName = photos[0].file_name;
-      userObj.mostRecentPhotoDate = formatDateTime(photos[0].date_time);
-    }
-
-    // get the most commented photo
-    photos.sort((a, b) => b.comments.length - a.comments.length);
-    if (photos.length > 0) {
-      userObj.mostCommentedPhotoName = photos[0].file_name;
-      userObj.commentsCount = photos[0].comments.length;
-    }
-
-    // response the data back to the frontend browser
-    return response.status(200).json(userObj); // retuen user detail INCLUDING recent photo and most commented photo
-  } catch (error) {
-    console.log(`** From "/user/:id": User ${userID}: Not Found! **`);
-    console.log("Error: ", error.message);
-    return response.status(500).json({ message: "Internal Server Error" });
-  }
-});
-/**
- * Constructing a photo's like object
- * @param {Object} photos
- * @param {Object} response
- * Used by app.get('/photosOfUser/:id')
- * */
-function processPhotoLike(photos, response) {
-  let processedPhotos = 0; // reset processed photos count for like object
-
-  photos.forEach((photo) => {
-    async.eachOf(
-      photo.likes,
-      (liked_user_id, index, done_callback) => {
-        // For each like in photo's lieks list, use liked_user_id property to find user object in Mongoose database
-        User.findOne({ _id: liked_user_id }, (error, user) => {
-          if (!error) {
-            const userObj = JSON.parse(JSON.stringify(user)); // parse retrieved Mongoose user data
-            const {
-              location,
-              description,
-              occupation,
-              __v,
-              password_digest,
-              salt,
-              login_name,
-              ...rest
-            } = userObj; // only keep (_id, first_name, last_name) properties
-            photo.likes[index] = rest; // update the user obj to each comment's user property.
-          }
-          done_callback(error); // this function will execute after all like items in likes list are processed (the third argument)
-        });
-      },
-      (err) => {
-        processedPhotos += 1; // the callback functon only get called once after all items have been processed.
-        if (err) {
-          response
-            .status(400)
-            .json({ message: "Error occured in finding likes under a photo" });
-          return;
-        }
-        if (processedPhotos === photos.length) {
-          // All photos comments and likes processed!
-          response.status(200).json(photos); // Send the response only when all processing is done
-        }
-      }
-    ); // end of "async.eachOf()"
-  });
-}
-
-/**
- * Sort photo in descending order by likes votes first, then by date
- * Used by app.get('/photosOfUser/:id')
- * @param {Object} photos
- * @returns list of sorted photos
- */
-function sortedPhotos(photos) {
-  return photos.sort((a, b) => {
-    // Sort by like count in descending order
-    if (b.likes.length !== a.likes.length) {
-      return b.likes.length - a.likes.length;
-    }
-    // If like counts are the same, sort by timestamp in descending order
-    return new Date(b.date_time).getTime() - new Date(a.date_time).getTime();
-  });
-}
-
-/**
- * * Jian Zhong
- * * URL /photosOfUser/:id - Return the Photos from User's id
- */
-app.get("/photosOfUser/:id", hasSessionRecord, function (request, response) {
-  const id = request.params.id;
-
-  /**
-   * Finding a single user's photos from the user's ID
-   */
-  Photo.find({ user_id: id }, (err, photosData) => {
-    if (err) {
-      console.log(`Photos with user id ${id}: Not Found`);
-      response
-        .status(400)
-        .json({ message: `Photos with user id ${id}: Not Found` });
-    }
-
-    const photos = JSON.parse(JSON.stringify(photosData)); // get data from server and convert to JS data
-    if (photos.length === 0) {
-      console.log(`Sending photos of Null value to front-end: `, null);
-      response.status(200).json(null); // ! but fixed by replacing 'photos' with 'null'
-      // ! Bug1 fixed temperally: inifinte loops if refresh the user photos' page
-      // ! when user has no photos posted yet
-      // ! but refreshing the page works when user has one or more photos posted.
-    }
-
-    /**
-     * * Start constructing each photo's comment object
-     * * Since each photo has a list of comments with opeartions, so use async.eachOf()
-     * * to do the operations for each comment asynchronously.
-     * Since each commment under photo contains only user_id property,
-     * so need to find comment text from user_id, and create each commment object
-     */
-    // For each photo in photos list:
-    sortedPhotos(photos); // sort photo in descending order by likes votes first, then by date
-    let processedPhotos = 0; // count the number of processed photos
-    photos.forEach((photo) => {
-      delete photo.__v; // remove the unnessary property before sending to client
-      photo.date_time = formatDateTime(photo.date_time); // make date time of each photo more readable
-
-      /**
-       * * Start constructing each photo's comment object
-       * * Since each photo has a list of comments with opeartions, so use async.eachOf()
-       * * to do the operations for each comment asynchronously.
-       * Since each commment under photo contains only user_id property,
-       * so need to find comment text from user_id, and create each commment object
-       */
-      async.eachOf(
-        photo.comments,
-        (comment, index, done_callback) => {
-          // For each comment in comments list, use user_id property to find user object in Mongoose database
-          User.findOne({ _id: comment.user_id }, (error, user) => {
-            if (!error) {
-              const userObj = JSON.parse(JSON.stringify(user)); // parse retrieved Mongoose user data
-              const { location, description, occupation, __v, ...rest } =
-                userObj; // only keep (_id, first_name, last_name) properties
-              photo.comments[index].user = rest; // update the user obj to each comment's user property.
-              delete photo.comments[index].user_id; // remove unnessary property for each comment
-            }
-            done_callback(error);
-          });
-        },
-        (err1) => {
-          processedPhotos += 1; // count increases by 1 when each entire photo's likes list is all done.
-          if (err1) {
-            response.status(400).json({
-              message: "Error occured in finding commments under a photo",
-            });
-            return;
-          }
-          if (processedPhotos === photos.length) {
-            // when all photos' likes lists are done, response back to the server.
-            processPhotoLike(photos, response);
-          }
-        }
-      ); // end of "async.eachOf()"
-    }); // end of "photoList.forEach()"
-  });
-});
 app.post("/like/:photo_id", (request, response) => {
   const photoID = request.params.photo_id;
   const userID = request.body.user_id; // Get the user ID from the request body
@@ -791,6 +543,40 @@ app.post("/deletePhoto/:id", async (request, response) => {
   }
 });
 
+// app.post("/favorite/:photoId", hasSessionRecord, async (req, res) => {
+//   try {
+//     const user = await User.findById(req.session.userId);
+//     if (!user.favorites.includes(req.params.photoId)) {
+//       user.favorites.push(req.params.photoId);
+//       await user.save();
+//     }
+//     res.status(200).send("Photo added to favorites");
+//   } catch (error) {
+//     res.status(500).send(error.message);
+//   }
+// });
+
+// // Remove a photo from favorites
+// app.post("/unfavorite/:photoId", hasSessionRecord, async (req, res) => {
+//   try {
+//     const user = await User.findById(req.session.userId);
+//     user.favorites.pull(req.params.photoId);
+//     await user.save();
+//     res.status(200).send("Photo removed from favorites");
+//   } catch (error) {
+//     res.status(500).send(error.message);
+//   }
+// });
+
+// // Get the list of favorited photos
+// app.get("/favorites", hasSessionRecord, async (req, res) => {
+//   try {
+//     const user = await User.findById(req.session.userId).populate("favorites");
+//     res.status(200).json(user.favorites);
+//   } catch (error) {
+//     res.status(500).send(error.message);
+//   }
+// });
 var server = app.listen(3000, function () {
   const port = server.address().port;
   console.log(

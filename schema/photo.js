@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 /**
  * Define the Mongoose Schema for a Comment.
  */
+
 const commentSchema = new mongoose.Schema({
   // The text of the comment.
   comment: String,

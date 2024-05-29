@@ -14,3 +14,11 @@
 .user-detail button:hover {
   background-color: #45a049;
 }
+/* styles.css */
+
+/* Зургийн контейнер */
+.user-detail img {
+  max-width: 50%; 
+  height: 100px; 
+  display: block; 
+}
